@@ -34,15 +34,15 @@ router = APIRouter(prefix="/users", tags=["users"])
     dependencies=[Depends(get_current_active_superuser)],
     response_model=UsersPublic,
 )
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_users(session: SessionDep, search_term: str, skip: int = 0, limit: int = 100) -> Any:
     """
-    Retrieve users.
+    Retrieve users filtered by search term in email.
     """
-
-    count_statement = select(func.count()).select_from(User)
-    count = session.exec(count_statement).one()
-
-    statement = select(User).offset(skip).limit(limit)
+    
+    statement = select(User).where(User.email.contains(search_term))
+    count = session.exec(statement).all().__len__()
+    
+    statement = statement.offset(skip).limit(limit)
     users = session.exec(statement).all()
 
     return UsersPublic(data=users, count=count)
