@@ -50,9 +50,7 @@ test("User can reset password successfully using the link", async ({
     timeout: 5000,
   })
 
-  await page.goto(
-    `${process.env.MAILCATCHER_HOST}/messages/${emailData.id}.html`,
-  )
+  await page.goto(`http://localhost:1080/messages/${emailData.id}.html`)
 
   const selector = 'a[href*="/reset-password?token="]'
 
@@ -64,8 +62,8 @@ test("User can reset password successfully using the link", async ({
   // Set the new password and confirm it
   await page.goto(url)
 
-  await page.getByPlaceholder("New Password").fill(newPassword)
-  await page.getByPlaceholder("Confirm Password").fill(newPassword)
+  await page.getByLabel("Set Password").fill(newPassword)
+  await page.getByLabel("Confirm Password").fill(newPassword)
   await page.getByRole("button", { name: "Reset Password" }).click()
   await expect(page.getByText("Password updated successfully")).toBeVisible()
 
@@ -79,8 +77,8 @@ test("Expired or invalid reset link", async ({ page }) => {
 
   await page.goto(invalidUrl)
 
-  await page.getByPlaceholder("New Password").fill(password)
-  await page.getByPlaceholder("Confirm Password").fill(password)
+  await page.getByLabel("Set Password").fill(password)
+  await page.getByLabel("Confirm Password").fill(password)
   await page.getByRole("button", { name: "Reset Password" }).click()
 
   await expect(page.getByText("Invalid token")).toBeVisible()
@@ -105,9 +103,7 @@ test("Weak new password validation", async ({ page, request }) => {
     timeout: 5000,
   })
 
-  await page.goto(
-    `${process.env.MAILCATCHER_HOST}/messages/${emailData.id}.html`,
-  )
+  await page.goto(`http://localhost:1080/messages/${emailData.id}.html`)
 
   const selector = 'a[href*="/reset-password?token="]'
   let url = await page.getAttribute(selector, "href")
@@ -115,8 +111,8 @@ test("Weak new password validation", async ({ page, request }) => {
 
   // Set a weak new password
   await page.goto(url)
-  await page.getByPlaceholder("New Password").fill(weakPassword)
-  await page.getByPlaceholder("Confirm Password").fill(weakPassword)
+  await page.getByLabel("Set Password").fill(weakPassword)
+  await page.getByLabel("Confirm Password").fill(weakPassword)
   await page.getByRole("button", { name: "Reset Password" }).click()
 
   await expect(

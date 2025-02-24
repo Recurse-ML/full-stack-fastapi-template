@@ -3,9 +3,13 @@ import {
   Button,
   Container,
   Flex,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
   Heading,
   Input,
   Text,
+  useColorModeValue,
 } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -16,15 +20,15 @@ import {
   type UserPublic,
   type UserUpdateMe,
   UsersService,
-} from "@/client"
-import useAuth from "@/hooks/useAuth"
-import useCustomToast from "@/hooks/useCustomToast"
-import { emailPattern, handleError } from "@/utils"
-import { Field } from "../ui/field"
+} from "../../client"
+import useAuth from "../../hooks/useAuth"
+import useCustomToast from "../../hooks/useCustomToast"
+import { emailPattern, handleError } from "../../utils"
 
 const UserInformation = () => {
   const queryClient = useQueryClient()
-  const { showSuccessToast } = useCustomToast()
+  const color = useColorModeValue("inherit", "ui.light")
+  const showToast = useCustomToast()
   const [editMode, setEditMode] = useState(false)
   const { user: currentUser } = useAuth()
   const {
@@ -50,10 +54,10 @@ const UserInformation = () => {
     mutationFn: (data: UserUpdateMe) =>
       UsersService.updateUserMe({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User updated successfully.")
+      showToast("Success!", "User updated successfully.", "success")
     },
     onError: (err: ApiError) => {
-      handleError(err)
+      handleError(err, showToast)
     },
     onSettled: () => {
       queryClient.invalidateQueries()
@@ -76,67 +80,70 @@ const UserInformation = () => {
           User Information
         </Heading>
         <Box
-          w={{ sm: "full", md: "sm" }}
+          w={{ sm: "full", md: "50%" }}
           as="form"
           onSubmit={handleSubmit(onSubmit)}
         >
-          <Field label="Full name">
+          <FormControl>
+            <FormLabel color={color} htmlFor="name">
+              Full name
+            </FormLabel>
             {editMode ? (
               <Input
+                id="name"
                 {...register("full_name", { maxLength: 30 })}
                 type="text"
                 size="md"
+                w="auto"
               />
             ) : (
               <Text
-                fontSize="md"
+                size="md"
                 py={2}
-                color={!currentUser?.full_name ? "gray" : "inherit"}
-                truncate
-                maxW="sm"
+                color={!currentUser?.full_name ? "ui.dim" : "inherit"}
+                isTruncated
+                maxWidth="250px"
               >
                 {currentUser?.full_name || "N/A"}
               </Text>
             )}
-          </Field>
-          <Field
-            mt={4}
-            label="Email"
-            invalid={!!errors.email}
-            errorText={errors.email?.message}
-          >
+          </FormControl>
+          <FormControl mt={4} isInvalid={!!errors.email}>
+            <FormLabel color={color} htmlFor="email">
+              Email
+            </FormLabel>
             {editMode ? (
               <Input
+                id="email"
                 {...register("email", {
                   required: "Email is required",
                   pattern: emailPattern,
                 })}
                 type="email"
                 size="md"
+                w="auto"
               />
             ) : (
-              <Text fontSize="md" py={2} truncate maxW="sm">
+              <Text size="md" py={2} isTruncated maxWidth="250px">
                 {currentUser?.email}
               </Text>
             )}
-          </Field>
+            {errors.email && (
+              <FormErrorMessage>{errors.email.message}</FormErrorMessage>
+            )}
+          </FormControl>
           <Flex mt={4} gap={3}>
             <Button
-              variant="solid"
+              variant="primary"
               onClick={toggleEditMode}
               type={editMode ? "button" : "submit"}
-              loading={editMode ? isSubmitting : false}
-              disabled={editMode ? !isDirty || !getValues("email") : false}
+              isLoading={editMode ? isSubmitting : false}
+              isDisabled={editMode ? !isDirty || !getValues("email") : false}
             >
               {editMode ? "Save" : "Edit"}
             </Button>
             {editMode && (
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
+              <Button onClick={onCancel} isDisabled={isSubmitting}>
                 Cancel
               </Button>
             )}

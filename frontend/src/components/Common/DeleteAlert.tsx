@@ -11,17 +11,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import React from "react"
 import { useForm } from "react-hook-form"
 
-import { type ApiError, UsersService } from "../../client"
-import useAuth from "../../hooks/useAuth"
+import { ItemsService, UsersService } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
-import { handleError } from "../../utils"
 
 interface DeleteProps {
+  type: string
+  id: string
   isOpen: boolean
   onClose: () => void
 }
 
-const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
+const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
   const cancelRef = React.useRef<HTMLButtonElement | null>(null)
@@ -29,29 +29,43 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
     handleSubmit,
     formState: { isSubmitting },
   } = useForm()
-  const { logout } = useAuth()
+
+  const deleteEntity = async (id: string) => {
+    if (type === "Item") {
+      await ItemsService.deleteItem({ id: id })
+    } else if (type === "User") {
+      await UsersService.deleteUser({ userId: id })
+    } else {
+      throw new Error(`Unexpected type: ${type}`)
+    }
+  }
 
   const mutation = useMutation({
-    mutationFn: () => UsersService.deleteUserMe(),
+    mutationFn: deleteEntity,
     onSuccess: () => {
       showToast(
         "Success",
-        "Your account has been successfully deleted.",
+        `The ${type.toLowerCase()} was deleted successfully.`,
         "success",
       )
-      logout()
       onClose()
     },
-    onError: (err: ApiError) => {
-      handleError(err, showToast)
+    onError: () => {
+      showToast(
+        "An error occurred.",
+        `An error occurred while deleting the ${type.toLowerCase()}.`,
+        "error",
+      )
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] })
+      queryClient.invalidateQueries({
+        queryKey: [type === "Item" ? "items" : "users"],
+      })
     },
   })
 
   const onSubmit = async () => {
-    mutation.mutate()
+    mutation.mutate(id)
   }
 
   return (
@@ -65,18 +79,21 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
       >
         <AlertDialogOverlay>
           <AlertDialogContent as="form" onSubmit={handleSubmit(onSubmit)}>
-            <AlertDialogHeader>Confirmation Required</AlertDialogHeader>
+            <AlertDialogHeader>Delete {type}</AlertDialogHeader>
 
             <AlertDialogBody>
-              All your account data will be{" "}
-              <strong>permanently deleted.</strong> If you are sure, please
-              click <strong>"Confirm"</strong> to proceed. This action cannot be
-              undone.
+              {type === "User" && (
+                <span>
+                  All items associated with this user will also be{" "}
+                  <strong>permantly deleted. </strong>
+                </span>
+              )}
+              Are you sure? You will not be able to undo this action.
             </AlertDialogBody>
 
             <AlertDialogFooter gap={3}>
               <Button variant="danger" type="submit" isLoading={isSubmitting}>
-                Confirm
+                Delete
               </Button>
               <Button
                 ref={cancelRef}
@@ -93,4 +110,4 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   )
 }
 
-export default DeleteConfirmation
+export default Delete
