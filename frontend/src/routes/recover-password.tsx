@@ -1,16 +1,20 @@
-import { Container, Heading, Input, Text } from "@chakra-ui/react"
+import {
+  Button,
+  Container,
+  FormControl,
+  FormErrorMessage,
+  Heading,
+  Input,
+  Text,
+} from "@chakra-ui/react"
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { type SubmitHandler, useForm } from "react-hook-form"
-import { FiMail } from "react-icons/fi"
 
-import { type ApiError, LoginService } from "@/client"
-import { Button } from "@/components/ui/button"
-import { Field } from "@/components/ui/field"
-import { InputGroup } from "@/components/ui/input-group"
-import { isLoggedIn } from "@/hooks/useAuth"
-import useCustomToast from "@/hooks/useCustomToast"
-import { emailPattern, handleError } from "@/utils"
+import { type ApiError, LoginService } from "../client"
+import { isLoggedIn } from "../hooks/useAuth"
+import useCustomToast from "../hooks/useCustomToast"
+import { emailPattern, handleError } from "../utils"
 
 interface FormData {
   email: string
@@ -34,7 +38,7 @@ function RecoverPassword() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>()
-  const { showSuccessToast } = useCustomToast()
+  const showToast = useCustomToast()
 
   const recoverPassword = async (data: FormData) => {
     await LoginService.recoverPassword({
@@ -45,11 +49,15 @@ function RecoverPassword() {
   const mutation = useMutation({
     mutationFn: recoverPassword,
     onSuccess: () => {
-      showSuccessToast("Password recovery email sent successfully.")
+      showToast(
+        "Email sent.",
+        "We sent an email with a link to get back into your account.",
+        "success",
+      )
       reset()
     },
     onError: (err: ApiError) => {
-      handleError(err)
+      handleError(err, showToast)
     },
   })
 
@@ -71,23 +79,24 @@ function RecoverPassword() {
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
         Password Recovery
       </Heading>
-      <Text textAlign="center">
+      <Text align="center">
         A password recovery email will be sent to the registered account.
       </Text>
-      <Field invalid={!!errors.email} errorText={errors.email?.message}>
-        <InputGroup w="100%" startElement={<FiMail />}>
-          <Input
-            id="email"
-            {...register("email", {
-              required: "Email is required",
-              pattern: emailPattern,
-            })}
-            placeholder="Email"
-            type="email"
-          />
-        </InputGroup>
-      </Field>
-      <Button variant="solid" type="submit" loading={isSubmitting}>
+      <FormControl isInvalid={!!errors.email}>
+        <Input
+          id="email"
+          {...register("email", {
+            required: "Email is required",
+            pattern: emailPattern,
+          })}
+          placeholder="Email"
+          type="email"
+        />
+        {errors.email && (
+          <FormErrorMessage>{errors.email.message}</FormErrorMessage>
+        )}
+      </FormControl>
+      <Button variant="primary" type="submit" isLoading={isSubmitting}>
         Continue
       </Button>
     </Container>
