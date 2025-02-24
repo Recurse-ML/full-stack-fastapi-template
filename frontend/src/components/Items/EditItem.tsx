@@ -22,7 +22,6 @@ import {
   ItemsService,
 } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
-import { handleError } from "../../utils"
 
 interface EditItemProps {
   item: ItemPublic
@@ -52,7 +51,8 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
       onClose()
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      const errDetail = (err.body as any)?.detail
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] })

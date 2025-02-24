@@ -14,7 +14,7 @@ import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { type ApiError, type UpdatePassword, UsersService } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
-import { confirmPasswordRules, handleError, passwordRules } from "../../utils"
+import { confirmPasswordRules, passwordRules } from "../../utils"
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string
@@ -38,11 +38,12 @@ const ChangePassword = () => {
     mutationFn: (data: UpdatePassword) =>
       UsersService.updatePasswordMe({ requestBody: data }),
     onSuccess: () => {
-      showToast("Success!", "Password updated successfully.", "success")
+      showToast("Success!", "Password updated.", "success")
       reset()
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      const errDetail = (err.body as any)?.detail
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
   })
 
@@ -70,7 +71,6 @@ const ChangePassword = () => {
               {...register("current_password")}
               placeholder="Password"
               type="password"
-              w="auto"
             />
             {errors.current_password && (
               <FormErrorMessage>
@@ -85,7 +85,6 @@ const ChangePassword = () => {
               {...register("new_password", passwordRules())}
               placeholder="Password"
               type="password"
-              w="auto"
             />
             {errors.new_password && (
               <FormErrorMessage>{errors.new_password.message}</FormErrorMessage>
@@ -98,7 +97,6 @@ const ChangePassword = () => {
               {...register("confirm_password", confirmPasswordRules(getValues))}
               placeholder="Password"
               type="password"
-              w="auto"
             />
             {errors.confirm_password && (
               <FormErrorMessage>

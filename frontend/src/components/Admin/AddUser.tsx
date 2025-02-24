@@ -20,7 +20,7 @@ import { type SubmitHandler, useForm } from "react-hook-form"
 import { type UserCreate, UsersService } from "../../client"
 import type { ApiError } from "../../client/core/ApiError"
 import useCustomToast from "../../hooks/useCustomToast"
-import { emailPattern, handleError } from "../../utils"
+import { emailPattern } from "../../utils"
 
 interface AddUserProps {
   isOpen: boolean
@@ -62,7 +62,8 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       onClose()
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      const errDetail = (err.body as any)?.detail
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })

@@ -1,6 +1,7 @@
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons"
 import {
   Button,
+  Center,
   Container,
   FormControl,
   FormErrorMessage,
@@ -10,7 +11,6 @@ import {
   InputGroup,
   InputRightElement,
   Link,
-  Text,
   useBoolean,
 } from "@chakra-ui/react"
 import {
@@ -88,7 +88,6 @@ function Login() {
           <Input
             id="username"
             {...register("username", {
-              required: "Username is required",
               pattern: emailPattern,
             })}
             placeholder="Email"
@@ -102,9 +101,7 @@ function Login() {
         <FormControl id="password" isInvalid={!!error}>
           <InputGroup>
             <Input
-              {...register("password", {
-                required: "Password is required",
-              })}
+              {...register("password")}
               type={show ? "text" : "password"}
               placeholder="Password"
               required
@@ -116,7 +113,6 @@ function Login() {
               }}
             >
               <Icon
-                as={show ? ViewOffIcon : ViewIcon}
                 onClick={setShow.toggle}
                 aria-label={show ? "Hide password" : "Show password"}
               >
@@ -126,18 +122,14 @@ function Login() {
           </InputGroup>
           {error && <FormErrorMessage>{error}</FormErrorMessage>}
         </FormControl>
-        <Link as={RouterLink} to="/recover-password" color="blue.500">
-          Forgot password?
-        </Link>
+        <Center>
+          <Link as={RouterLink} to="/recover-password" color="blue.500">
+            Forgot password?
+          </Link>
+        </Center>
         <Button variant="primary" type="submit" isLoading={isSubmitting}>
           Log In
         </Button>
-        <Text>
-          Don't have an account?{" "}
-          <Link as={RouterLink} to="/signup" color="blue.500">
-            Sign up
-          </Link>
-        </Text>
       </Container>
     </>
   )
