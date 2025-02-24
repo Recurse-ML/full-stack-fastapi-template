@@ -23,7 +23,7 @@ import {
 } from "../../client"
 import useAuth from "../../hooks/useAuth"
 import useCustomToast from "../../hooks/useCustomToast"
-import { emailPattern, handleError } from "../../utils"
+import { emailPattern } from "../../utils"
 
 const UserInformation = () => {
   const queryClient = useQueryClient()
@@ -57,10 +57,13 @@ const UserInformation = () => {
       showToast("Success!", "User updated successfully.", "success")
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      const errDetail = (err.body as any)?.detail
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
-      queryClient.invalidateQueries()
+      // TODO: can we do just one call now?
+      queryClient.invalidateQueries({ queryKey: ["users"] })
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] })
     },
   })
 
@@ -94,15 +97,12 @@ const UserInformation = () => {
                 {...register("full_name", { maxLength: 30 })}
                 type="text"
                 size="md"
-                w="auto"
               />
             ) : (
               <Text
                 size="md"
                 py={2}
                 color={!currentUser?.full_name ? "ui.dim" : "inherit"}
-                isTruncated
-                maxWidth="250px"
               >
                 {currentUser?.full_name || "N/A"}
               </Text>
@@ -121,10 +121,9 @@ const UserInformation = () => {
                 })}
                 type="email"
                 size="md"
-                w="auto"
               />
             ) : (
-              <Text size="md" py={2} isTruncated maxWidth="250px">
+              <Text size="md" py={2}>
                 {currentUser?.email}
               </Text>
             )}

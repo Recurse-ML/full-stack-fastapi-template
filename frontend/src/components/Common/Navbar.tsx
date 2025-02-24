@@ -1,17 +1,17 @@
-import type { ComponentType, ElementType } from "react"
-
 import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react"
 import { FaPlus } from "react-icons/fa"
 
+import AddUser from "../Admin/AddUser"
+import AddItem from "../Items/AddItem"
+
 interface NavbarProps {
   type: string
-  addModalAs: ComponentType | ElementType
 }
 
-const Navbar = ({ type, addModalAs }: NavbarProps) => {
-  const addModal = useDisclosure()
+const Navbar = ({ type }: NavbarProps) => {
+  const addUserModal = useDisclosure()
+  const addItemModal = useDisclosure()
 
-  const AddModal = addModalAs
   return (
     <>
       <Flex py={8} gap={4}>
@@ -26,11 +26,12 @@ const Navbar = ({ type, addModalAs }: NavbarProps) => {
           variant="primary"
           gap={1}
           fontSize={{ base: "sm", md: "inherit" }}
-          onClick={addModal.onOpen}
+          onClick={type === "User" ? addUserModal.onOpen : addItemModal.onOpen}
         >
           <Icon as={FaPlus} /> Add {type}
         </Button>
-        <AddModal isOpen={addModal.isOpen} onClose={addModal.onClose} />
+        <AddUser isOpen={addUserModal.isOpen} onClose={addUserModal.onClose} />
+        <AddItem isOpen={addItemModal.isOpen} onClose={addItemModal.onClose} />
       </Flex>
     </>
   )

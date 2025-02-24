@@ -35,7 +35,6 @@ const UserMenu = () => {
             icon={<FaUserAstronaut color="white" fontSize="18px" />}
             bg="ui.main"
             isRound
-            data-testid="user-menu"
           />
           <MenuList>
             <MenuItem icon={<FiUser fontSize="18px" />} as={Link} to="settings">

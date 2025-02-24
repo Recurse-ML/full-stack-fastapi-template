@@ -24,7 +24,7 @@ import {
   UsersService,
 } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
-import { emailPattern, handleError } from "../../utils"
+import { emailPattern } from "../../utils"
 
 interface EditUserProps {
   user: UserPublic
@@ -60,7 +60,8 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
       onClose()
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      const errDetail = (err.body as any)?.detail
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })

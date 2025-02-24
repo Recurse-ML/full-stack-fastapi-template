@@ -1,7 +1,10 @@
+import { z } from "zod"
 import {
+  Button,
   Container,
+  Flex,
   Heading,
-  SkeletonText,
+  Skeleton,
   Table,
   TableContainer,
   Tbody,
@@ -12,14 +15,11 @@ import {
 } from "@chakra-ui/react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useEffect } from "react"
-import { z } from "zod"
 
+import { useEffect } from "react"
 import { ItemsService } from "../../client"
 import ActionsMenu from "../../components/Common/ActionsMenu"
 import Navbar from "../../components/Common/Navbar"
-import AddItem from "../../components/Items/AddItem"
-import { PaginationFooter } from "../../components/Common/PaginationFooter.tsx"
 
 const itemsSearchSchema = z.object({
   page: z.number().catch(1),
@@ -45,7 +45,7 @@ function ItemsTable() {
   const { page } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const setPage = (page: number) =>
-    navigate({ search: (prev: {[key: string]: string}) => ({ ...prev, page }) })
+    navigate({ search: (prev) => ({ ...prev, page }) })
 
   const {
     data: items,
@@ -63,7 +63,7 @@ function ItemsTable() {
     if (hasNextPage) {
       queryClient.prefetchQuery(getItemsQueryOptions({ page: page + 1 }))
     }
-  }, [page, queryClient, hasNextPage])
+  }, [page, queryClient])
 
   return (
     <>
@@ -79,27 +79,25 @@ function ItemsTable() {
           </Thead>
           {isPending ? (
             <Tbody>
-              <Tr>
-                {new Array(4).fill(null).map((_, index) => (
-                  <Td key={index}>
-                    <SkeletonText noOfLines={1} paddingBlock="16px" />
-                  </Td>
-                ))}
-              </Tr>
+              {new Array(5).fill(null).map((_, index) => (
+                <Tr key={index}>
+                  {new Array(4).fill(null).map((_, index) => (
+                    <Td key={index}>
+                      <Flex>
+                        <Skeleton height="20px" width="20px" />
+                      </Flex>
+                    </Td>
+                  ))}
+                </Tr>
+              ))}
             </Tbody>
           ) : (
             <Tbody>
               {items?.data.map((item) => (
                 <Tr key={item.id} opacity={isPlaceholderData ? 0.5 : 1}>
                   <Td>{item.id}</Td>
-                  <Td isTruncated maxWidth="150px">
-                    {item.title}
-                  </Td>
-                  <Td
-                    color={!item.description ? "ui.dim" : "inherit"}
-                    isTruncated
-                    maxWidth="150px"
-                  >
+                  <Td>{item.title}</Td>
+                  <Td color={!item.description ? "ui.dim" : "inherit"}>
                     {item.description || "N/A"}
                   </Td>
                   <Td>
@@ -111,12 +109,21 @@ function ItemsTable() {
           )}
         </Table>
       </TableContainer>
-      <PaginationFooter
-        page={page}
-        onChangePage={setPage}
-        hasNextPage={hasNextPage}
-        hasPreviousPage={hasPreviousPage}
-      />
+      <Flex
+        gap={4}
+        alignItems="center"
+        mt={4}
+        direction="row"
+        justifyContent="flex-end"
+      >
+        <Button onClick={() => setPage(page - 1)} isDisabled={!hasPreviousPage}>
+          Previous
+        </Button>
+        <span>Page {page}</span>
+        <Button isDisabled={!hasNextPage} onClick={() => setPage(page + 1)}>
+          Next
+        </Button>
+      </Flex>
     </>
   )
 }
@@ -128,7 +135,7 @@ function Items() {
         Items Management
       </Heading>
 
-      <Navbar type={"Item"} addModalAs={AddItem} />
+      <Navbar type={"Item"} />
       <ItemsTable />
     </Container>
   )
