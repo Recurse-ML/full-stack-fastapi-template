@@ -1,10 +1,15 @@
-import { Container, Heading, Stack } from "@chakra-ui/react"
-import { useTheme } from "next-themes"
-
-import { Radio, RadioGroup } from "@/components/ui/radio"
+import {
+  Badge,
+  Container,
+  Heading,
+  Radio,
+  RadioGroup,
+  Stack,
+  useColorMode,
+} from "@chakra-ui/react"
 
 const Appearance = () => {
-  const { theme, setTheme } = useTheme()
+  const { colorMode, toggleColorMode } = useColorMode()
 
   return (
     <>
@@ -12,16 +17,18 @@ const Appearance = () => {
         <Heading size="sm" py={4}>
           Appearance
         </Heading>
-
-        <RadioGroup
-          onValueChange={(e) => setTheme(e.value)}
-          value={theme}
-          colorPalette="teal"
-        >
+        <RadioGroup onChange={toggleColorMode} value={colorMode}>
           <Stack>
-            <Radio value="system">System</Radio>
-            <Radio value="light">Light Mode</Radio>
-            <Radio value="dark">Dark Mode</Radio>
+            {/* TODO: Add system default option */}
+            <Radio value="light" colorScheme="teal">
+              Light Mode
+              <Badge ml="1" colorScheme="teal">
+                Default
+              </Badge>
+            </Radio>
+            <Radio value="dark" colorScheme="teal">
+              Dark Mode
+            </Radio>
           </Stack>
         </RadioGroup>
       </Container>
