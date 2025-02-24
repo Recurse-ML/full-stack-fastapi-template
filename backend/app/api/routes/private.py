@@ -16,7 +16,7 @@ router = APIRouter(tags=["private"], prefix="/private")
 class PrivateUserCreate(BaseModel):
     email: str
     password: str
-    full_name: str
+    name: str
     is_verified: bool = False
 
 
