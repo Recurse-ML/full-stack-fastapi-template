@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.core import security
 from app.core.config import settings
-from app.db.engine import engine
+from app.db.session import SessionLocal
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -17,8 +17,11 @@ reusable_oauth2 = OAuth2PasswordBearer(
 
 
 def get_db() -> Generator:
-    with Session(engine) as session:
-        yield session
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()
 
 
 def get_current_user(
