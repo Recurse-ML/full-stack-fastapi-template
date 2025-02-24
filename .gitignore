@@ -1,6 +1,5 @@
 .vscode
-node_modules/
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
+testing-project
+.mypy_cache
+poetry.lock
+dev-link/
