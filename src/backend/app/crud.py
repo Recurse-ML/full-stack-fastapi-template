@@ -1,4 +1,3 @@
-import uuid
 from typing import Any
 
 from sqlmodel import Session, select
@@ -17,7 +16,10 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     return db_obj
 
 
-def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
+def update_user(*, session: Session, user_id: int, user_in: UserUpdate) -> Any:
+    db_user = session.get(User, user_id)
+    if not db_user:
+        return None
     user_data = user_in.model_dump(exclude_unset=True)
     extra_data = {}
     if "password" in user_data:
@@ -31,22 +33,21 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     return db_user
 
 
-def read_user_by_email(*, session: Session, email: str) -> User | None:
+def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)
     session_user = session.exec(statement).first()
     return session_user
 
 
 def authenticate(*, session: Session, email: str, password: str) -> User | None:
-    db_user = read_user_by_email(session=session, email=email)
+    db_user = get_user_by_email(session=session, email=email)
     if not db_user:
         return None
     if not verify_password(password, db_user.hashed_password):
         return None
     return db_user
 
-
-def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
+def create_item(*, session: Session, item_in: ItemCreate, owner_id: int) -> Item:
     db_item = Item.model_validate(item_in, update={"owner_id": owner_id})
     session.add(db_item)
     session.commit()
