@@ -1,127 +1,116 @@
-import { Badge, Container, Flex, Heading, Table } from "@chakra-ui/react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { z } from "zod"
-
-import { type UserPublic, UsersService } from "@/client"
-import AddUser from "@/components/Admin/AddUser"
-import { UserActionsMenu } from "@/components/Common/UserActionsMenu"
-import PendingUsers from "@/components/Pending/PendingUsers"
 import {
-  PaginationItems,
-  PaginationNextTrigger,
-  PaginationPrevTrigger,
-  PaginationRoot,
-} from "@/components/ui/pagination.tsx"
+  Badge,
+  Box,
+  Container,
+  Flex,
+  Heading,
+  SkeletonText,
+  Table,
+  TableContainer,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@chakra-ui/react"
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
 
-const usersSearchSchema = z.object({
-  page: z.number().catch(1),
-})
-
-const PER_PAGE = 5
-
-function getUsersQueryOptions({ page }: { page: number }) {
-  return {
-    queryFn: () =>
-      UsersService.readUsers({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
-    queryKey: ["users", { page }],
-  }
-}
+import { Suspense } from "react"
+import { type UserPublic, UsersService } from "../../client"
+import AddUser from "../../components/Admin/AddUser"
+import ActionsMenu from "../../components/Common/ActionsMenu"
+import Navbar from "../../components/Common/Navbar"
 
 export const Route = createFileRoute("/_layout/admin")({
   component: Admin,
-  validateSearch: (search) => usersSearchSchema.parse(search),
 })
 
-function UsersTable() {
+const MembersTableBody = () => {
   const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
-  const navigate = useNavigate({ from: Route.fullPath })
-  const { page } = Route.useSearch()
 
-  const { data, isLoading, isPlaceholderData } = useQuery({
-    ...getUsersQueryOptions({ page }),
-    placeholderData: (prevData) => prevData,
+  const { data: users } = useSuspenseQuery({
+    queryKey: ["users"],
+    queryFn: () => UsersService.readUsers({}),
   })
 
-  const setPage = (page: number) =>
-    navigate({
-      search: (prev: { [key: string]: string }) => ({ ...prev, page }),
-    })
-
-  const users = data?.data.slice(0, PER_PAGE) ?? []
-  const count = data?.count ?? 0
-
-  if (isLoading) {
-    return <PendingUsers />
-  }
-
   return (
-    <>
-      <Table.Root size={{ base: "sm", md: "md" }}>
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeader w="sm">Full name</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Email</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Role</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Status</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Actions</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {users?.map((user) => (
-            <Table.Row key={user.id} opacity={isPlaceholderData ? 0.5 : 1}>
-              <Table.Cell color={!user.full_name ? "gray" : "inherit"}>
-                {user.full_name || "N/A"}
-                {currentUser?.id === user.id && (
-                  <Badge ml="1" colorScheme="teal">
-                    You
-                  </Badge>
-                )}
-              </Table.Cell>
-              <Table.Cell truncate maxW="sm">
-                {user.email}
-              </Table.Cell>
-              <Table.Cell>
-                {user.is_superuser ? "Superuser" : "User"}
-              </Table.Cell>
-              <Table.Cell>{user.is_active ? "Active" : "Inactive"}</Table.Cell>
-              <Table.Cell>
-                <UserActionsMenu
-                  user={user}
-                  disabled={currentUser?.id === user.id}
-                />
-              </Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
-      <Flex justifyContent="flex-end" mt={4}>
-        <PaginationRoot
-          count={count}
-          pageSize={PER_PAGE}
-          onPageChange={({ page }) => setPage(page)}
-        >
-          <Flex>
-            <PaginationPrevTrigger />
-            <PaginationItems />
-            <PaginationNextTrigger />
-          </Flex>
-        </PaginationRoot>
-      </Flex>
-    </>
+    <Tbody>
+      {users.data.map((user) => (
+        <Tr key={user.id}>
+          <Td color={!user.full_name ? "ui.dim" : "inherit"}>
+            {user.full_name || "N/A"}
+            {currentUser?.id === user.id && (
+              <Badge ml="1" colorScheme="teal">
+                You
+              </Badge>
+            )}
+          </Td>
+          <Td>{user.email}</Td>
+          <Td>{user.is_superuser ? "Superuser" : "User"}</Td>
+          <Td>
+            <Flex gap={2}>
+              <Box
+                w="2"
+                h="2"
+                borderRadius="50%"
+                bg={user.is_active ? "ui.success" : "ui.danger"}
+                alignSelf="center"
+              />
+              {user.is_active ? "Active" : "Inactive"}
+            </Flex>
+          </Td>
+          <Td>
+            <ActionsMenu
+              type="User"
+              value={user}
+              disabled={currentUser?.id === user.id ? true : false}
+            />
+          </Td>
+        </Tr>
+      ))}
+    </Tbody>
+  )
+}
+
+const MembersBodySkeleton = () => {
+  return (
+    <Tbody>
+      <Tr>
+        {new Array(5).fill(null).map((_, index) => (
+          <Td key={index}>
+            <SkeletonText noOfLines={1} paddingBlock="16px" />
+          </Td>
+        ))}
+      </Tr>
+    </Tbody>
   )
 }
 
 function Admin() {
   return (
     <Container maxW="full">
-      <Heading size="lg" pt={12}>
-        Users Management
+      <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
+        User Management
       </Heading>
-
-      <AddUser />
-      <UsersTable />
+      <Navbar type={"User"} addModalAs={AddUser} />
+      <TableContainer>
+        <Table fontSize="md" size={{ base: "sm", md: "md" }}>
+          <Thead>
+            <Tr>
+              <Th width="20%">Full name</Th>
+              <Th width="50%">Email</Th>
+              <Th width="10%">Role</Th>
+              <Th width="10%">Status</Th>
+              <Th width="10%">Actions</Th>
+            </Tr>
+          </Thead>
+          <Suspense fallback={<MembersBodySkeleton />}>
+            <MembersTableBody />
+          </Suspense>
+        </Table>
+      </TableContainer>
     </Container>
   )
 }
