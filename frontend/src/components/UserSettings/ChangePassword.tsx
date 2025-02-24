@@ -1,25 +1,34 @@
-import { Box, Button, Container, Heading, VStack } from "@chakra-ui/react"
+import {
+  Box,
+  Button,
+  Container,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Heading,
+  Input,
+  useColorModeValue,
+} from "@chakra-ui/react"
 import { useMutation } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
-import { FiLock } from "react-icons/fi"
 
-import { type ApiError, type UpdatePassword, UsersService } from "@/client"
-import useCustomToast from "@/hooks/useCustomToast"
-import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
-import { PasswordInput } from "../ui/password-input"
+import { type ApiError, type UpdatePassword, UsersService } from "../../client"
+import useCustomToast from "../../hooks/useCustomToast"
+import { confirmPasswordRules, handleError, passwordRules } from "../../utils"
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string
 }
 
 const ChangePassword = () => {
-  const { showSuccessToast } = useCustomToast()
+  const color = useColorModeValue("inherit", "ui.light")
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
     reset,
     getValues,
-    formState: { errors, isValid, isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<UpdatePasswordForm>({
     mode: "onBlur",
     criteriaMode: "all",
@@ -29,11 +38,11 @@ const ChangePassword = () => {
     mutationFn: (data: UpdatePassword) =>
       UsersService.updatePasswordMe({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Password updated successfully.")
+      showToast("Success!", "Password updated successfully.", "success")
       reset()
     },
     onError: (err: ApiError) => {
-      handleError(err)
+      handleError(err, showToast)
     },
   })
 
@@ -47,36 +56,61 @@ const ChangePassword = () => {
         <Heading size="sm" py={4}>
           Change Password
         </Heading>
-        <Box as="form" onSubmit={handleSubmit(onSubmit)}>
-          <VStack gap={4} w={{ base: "100%", md: "sm" }}>
-            <PasswordInput
-              type="current_password"
-              startElement={<FiLock />}
-              {...register("current_password", passwordRules())}
-              placeholder="Current Password"
-              errors={errors}
+        <Box
+          w={{ sm: "full", md: "50%" }}
+          as="form"
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          <FormControl isRequired isInvalid={!!errors.current_password}>
+            <FormLabel color={color} htmlFor="current_password">
+              Current Password
+            </FormLabel>
+            <Input
+              id="current_password"
+              {...register("current_password")}
+              placeholder="Password"
+              type="password"
+              w="auto"
             />
-            <PasswordInput
-              type="new_password"
-              startElement={<FiLock />}
+            {errors.current_password && (
+              <FormErrorMessage>
+                {errors.current_password.message}
+              </FormErrorMessage>
+            )}
+          </FormControl>
+          <FormControl mt={4} isRequired isInvalid={!!errors.new_password}>
+            <FormLabel htmlFor="password">Set Password</FormLabel>
+            <Input
+              id="password"
               {...register("new_password", passwordRules())}
-              placeholder="New Password"
-              errors={errors}
+              placeholder="Password"
+              type="password"
+              w="auto"
             />
-            <PasswordInput
-              type="confirm_password"
-              startElement={<FiLock />}
+            {errors.new_password && (
+              <FormErrorMessage>{errors.new_password.message}</FormErrorMessage>
+            )}
+          </FormControl>
+          <FormControl mt={4} isRequired isInvalid={!!errors.confirm_password}>
+            <FormLabel htmlFor="confirm_password">Confirm Password</FormLabel>
+            <Input
+              id="confirm_password"
               {...register("confirm_password", confirmPasswordRules(getValues))}
-              placeholder="Confirm Password"
-              errors={errors}
+              placeholder="Password"
+              type="password"
+              w="auto"
             />
-          </VStack>
+            {errors.confirm_password && (
+              <FormErrorMessage>
+                {errors.confirm_password.message}
+              </FormErrorMessage>
+            )}
+          </FormControl>
           <Button
-            variant="solid"
+            variant="primary"
             mt={4}
             type="submit"
-            loading={isSubmitting}
-            disabled={!isValid}
+            isLoading={isSubmitting}
           >
             Save
           </Button>
